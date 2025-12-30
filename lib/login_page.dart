@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:local_auth/local_auth.dart';
 
-import 'home_page.dart';
+import 'pin_setup_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,163 +14,245 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final emailCtrl = TextEditingController();
-  final passwordCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  final _pinCtrl = TextEditingController();
+  final _storage = const FlutterSecureStorage();
+  final _localAuth = LocalAuthentication();
 
-  bool isLoading = false;
-  bool showPassword = false;
+  bool _isPinLogin = false;
+  bool _isLoading = true;
 
-  Future<void> login() async {
-    setState(() => isLoading = true);
+  @override
+  void initState() {
+    super.initState();
+    _checkPinStatus();
+  }
 
+  Future<void> _checkPinStatus() async {
+    final pin = await _storage.read(key: 'pin');
+    setState(() {
+      _isPinLogin = pin != null;
+      _isLoading = false;
+    });
+    if (_isPinLogin) {
+      _authenticateWithBiometrics();
+    }
+  }
+
+  Future<void> _authenticateWithBiometrics() async {
+    try {
+      final canAuth = await _localAuth.canCheckBiometrics;
+      if (canAuth) {
+        final didAuthenticate = await _localAuth.authenticate(
+          localizedReason: 'Please authenticate to login',
+          options: const AuthenticationOptions(
+            biometricOnly: true,
+          ),
+        );
+        if (didAuthenticate) {
+          _navigateToHome();
+        }
+      }
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  Future<void> _loginWithEmail() async {
+    setState(() {
+      _isLoading = true;
+    });
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailCtrl.text.trim(),
-        password: passwordCtrl.text.trim(),
+        email: _emailCtrl.text.trim(),
+        password: _passwordCtrl.text.trim(),
       );
+      _navigateToPinSetup();
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Login failed. Please try again.')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
-      );
-    } catch (e) {
+  Future<void> _loginWithPin() async {
+    final storedPin = await _storage.read(key: 'pin');
+    if (storedPin == _pinCtrl.text.trim()) {
+      _navigateToHome();
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text('Incorrect PIN')),
       );
     }
+  }
 
-    setState(() => isLoading = false);
+  Future<void> _forgotPin() async {
+    await _storage.deleteAll();
+    await FirebaseAuth.instance.signOut();
+    setState(() {
+      _isPinLogin = false;
+    });
+  }
+
+  void _navigateToHome() {
+    Navigator.of(context).pushReplacementNamed('/home');
+  }
+
+  void _navigateToPinSetup() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const PinSetupPage()),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.deepPurple.shade50,
-
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height - 80,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // 🏦 APP BRAND
-                Column(
-                  children: const [
-                    Icon(
-                      Icons.account_balance,
-                      size: 70,
-                      color: Colors.deepPurple,
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      'Aishwaryeshwarar Finance',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple,
-                      ),
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      'Secure Partner Login',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 30),
-
-                // 🔐 LOGIN CARD
-                Card(
-                  elevation: 6,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      children: [
-                        TextField(
-                          controller: emailCtrl,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                            prefixIcon: Icon(Icons.email),
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        TextField(
-                          controller: passwordCtrl,
-                          obscureText: !showPassword,
-                          decoration: InputDecoration(
-                            labelText: 'Password',
-                            prefixIcon: const Icon(Icons.lock),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                showPassword
-                                    ? Icons.visibility
-                                    : Icons.visibility_off,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  showPassword = !showPassword;
-                                });
-                              },
-                            ),
-                            border: const OutlineInputBorder(),
-                          ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            onPressed: isLoading ? null : login,
-                            child: isLoading
-                                ? const CircularProgressIndicator(
-                              color: Colors.white,
-                            )
-                                : const Text(
-                              'Login',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF4B2C82), Color(0xFF6A4BC7)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: Colors.white))
+            : Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(32.0),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: _isPinLogin ? _buildPinLogin() : _buildEmailLogin(),
                   ),
                 ),
+              ),
+      ),
+    );
+  }
 
-                const SizedBox(height: 30),
+  Widget _buildEmailLogin() {
+    return Column(
+      key: const ValueKey('emailLogin'),
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.lock, size: 80, color: Colors.white),
+        const SizedBox(height: 20),
+        Text(
+          'Welcome Back',
+          style: GoogleFonts.lato(
+            color: Colors.white,
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'Sign in to continue',
+          style: GoogleFonts.lato(color: Colors.white70, fontSize: 16),
+        ),
+        const SizedBox(height: 40),
+        _buildTextField(controller: _emailCtrl, hint: 'Email', icon: Icons.email),
+        const SizedBox(height: 20),
+        _buildTextField(controller: _passwordCtrl, hint: 'Password', icon: Icons.lock, obscureText: true),
+        const SizedBox(height: 40),
+        _buildLoginButton(onPressed: _loginWithEmail, text: 'LOGIN'),
+      ],
+    );
+  }
 
-                // 🔒 FOOTER NOTE
-                const Text(
-                  'Authorized partners only',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.black54,
-                  ),
-                ),
-              ],
+  Widget _buildPinLogin() {
+    return Column(
+      key: const ValueKey('pinLogin'),
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.lock_person_sharp, size: 80, color: Colors.white),
+        const SizedBox(height: 20),
+        Text(
+          'Enter PIN',
+          style: GoogleFonts.lato(
+            color: Colors.white,
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 40),
+        _buildTextField(controller: _pinCtrl, hint: 'PIN', icon: Icons.pin, obscureText: true, isPin: true),
+        const SizedBox(height: 40),
+        _buildLoginButton(onPressed: _loginWithPin, text: 'UNLOCK'),
+        const SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            TextButton(
+              onPressed: _forgotPin,
+              child: Text(
+                'Forgot PIN?',
+                style: GoogleFonts.lato(color: Colors.white70),
+              ),
             ),
+            IconButton(
+              onPressed: _authenticateWithBiometrics,
+              icon: const Icon(Icons.fingerprint, size: 40, color: Colors.white),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    bool obscureText = false,
+    bool isPin = false,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: isPin ? TextInputType.number : TextInputType.emailAddress,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.white54),
+        prefixIcon: Icon(icon, color: Colors.white),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.1),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoginButton({required VoidCallback onPressed, required String text}) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: const Color(0xFF4B2C82),
+          padding: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Text(
+          text,
+          style: GoogleFonts.lato(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),

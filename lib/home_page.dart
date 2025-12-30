@@ -1,14 +1,43 @@
 import 'package:aishwaryeshwarar_finance/about_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'customer_list_page.dart';
 import 'dashboard_page.dart';
-import 'today_collection_page.dart';
 import 'interest_calculator_page.dart';
-import 'backup_restore_page.dart'; // ✅ NEW
+import 'backup_restore_page.dart';
+import 'today_collection_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+
+  Future<void> _logout(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Confirm Logout', style: GoogleFonts.lato()),
+        content: Text('Are you sure you want to log out?', style: GoogleFonts.lato()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('Cancel', style: GoogleFonts.lato()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('Logout', style: GoogleFonts.lato(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await const FlutterSecureStorage().deleteAll();
+      await FirebaseAuth.instance.signOut();
+      Navigator.of(context).pushReplacementNamed('/login');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,8 +59,8 @@ class HomePage extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(
+          DrawerHeader(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [Color(0xFF4B2C82), Color(0xFF6A4BC7)],
                 begin: Alignment.topLeft,
@@ -40,7 +69,7 @@ class HomePage extends StatelessWidget {
             ),
             child: Text(
               'Aishwaryeshwarar Finance',
-              style: TextStyle(
+              style: GoogleFonts.lato(
                 color: Colors.white,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -52,7 +81,14 @@ class HomePage extends StatelessWidget {
           _drawerItem(context, Icons.bar_chart, 'Dashboard', const DashboardPage()),
           _drawerItem(context, Icons.backup, 'Backup & Restore', const BackupRestorePage()),
           _drawerItem(context, Icons.calculate, 'Interest Calculator', const InterestCalculatorPage()),
+          const Divider(),
           _drawerItem(context, Icons.info, 'About Us', const AboutPage()),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Color(0xFF4B2C82)),
+            title: Text('Logout', style: GoogleFonts.lato(fontSize: 16)),
+            onTap: () => _logout(context),
+          ),
         ],
       ),
     );
@@ -63,11 +99,11 @@ class HomePage extends StatelessWidget {
       backgroundColor: const Color(0xFF4B2C82),
       floating: true,
       pinned: true,
-      expandedHeight: 200.0,
+      expandedHeight: 180.0,
       flexibleSpace: FlexibleSpaceBar(
-        title: const Text(
+        title: Text(
           'Aishwaryeshwarar Finance',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          style: GoogleFonts.lato(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         background: Container(
           decoration: const BoxDecoration(
@@ -89,12 +125,29 @@ class HomePage extends StatelessWidget {
   }
 
   SliverToBoxAdapter _buildHeader() {
-    return const SliverToBoxAdapter(
+    return SliverToBoxAdapter(
       child: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Text(
-          'Welcome Back!',
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Welcome Back!',
+              style: GoogleFonts.lato(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF333333),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Here are your quick actions',
+              style: GoogleFonts.lato(
+                fontSize: 18,
+                color: Colors.black54,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -119,8 +172,8 @@ class HomePage extends StatelessWidget {
 
   ListTile _drawerItem(BuildContext context, IconData icon, String title, Widget page) {
     return ListTile(
-      leading: Icon(icon, color: Colors.deepPurple),
-      title: Text(title),
+      leading: Icon(icon, color: const Color(0xFF4B2C82)),
+      title: Text(title, style: GoogleFonts.lato(fontSize: 16)),
       onTap: () {
         Navigator.pop(context);
         Navigator.push(context, MaterialPageRoute(builder: (_) => page));
@@ -135,14 +188,28 @@ class HomePage extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 14, offset: const Offset(0, 8))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 14,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 40, color: Colors.deepPurple),
-            const SizedBox(height: 12),
-            Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            Icon(icon, size: 45, color: const Color(0xFF4B2C82)),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.lato(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF333333),
+              ),
+            ),
           ],
         ),
       ),

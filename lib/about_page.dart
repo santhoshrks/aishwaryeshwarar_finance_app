@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class AboutPage extends StatelessWidget {
@@ -11,18 +12,18 @@ class AboutPage extends StatelessWidget {
       backgroundColor: const Color(0xFFF0F2F5),
       body: CustomScrollView(
         slivers: [
-          const SliverAppBar(
-            backgroundColor: Color(0xFF4B2C82),
+          SliverAppBar(
+            backgroundColor: const Color(0xFF4B2C82),
             floating: true,
             pinned: true,
             expandedHeight: 150.0,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 'About Us',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: GoogleFonts.lato(fontWeight: FontWeight.bold, fontSize: 16),
               ),
-              background: DecoratedBox(
-                decoration: BoxDecoration(
+              background: Container(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [Color(0xFF4B2C82), Color(0xFF6A4BC7)],
                     begin: Alignment.topLeft,
@@ -60,9 +61,13 @@ class AboutPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Our Services',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+              style: GoogleFonts.lato(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF4B2C82),
+              ),
             ),
             const SizedBox(height: 12),
             _buildServiceItem(Icons.monetization_on, 'Daily Thandal'),
@@ -85,9 +90,13 @@ class AboutPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Contact Us',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+              style: GoogleFonts.lato(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF4B2C82),
+              ),
             ),
             const SizedBox(height: 12),
             _buildContactHeader('By Phone'),
@@ -108,18 +117,18 @@ class AboutPage extends StatelessWidget {
   Widget _buildContactHeader(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black54)),
+      child: Text(title, style: GoogleFonts.lato(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black54)),
     );
   }
 
   Widget _buildServiceItem(IconData icon, String service) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          Icon(icon, color: Colors.deepPurple, size: 20),
+          Icon(icon, color: const Color(0xFF4B2C82), size: 20),
           const SizedBox(width: 12),
-          Expanded(child: Text(service, style: const TextStyle(fontSize: 16))),
+          Expanded(child: Text(service, style: GoogleFonts.lato(fontSize: 16))),
         ],
       ),
     );
@@ -127,8 +136,8 @@ class AboutPage extends StatelessWidget {
 
   ListTile _buildContactTile(IconData icon, String contact, VoidCallback onTap) {
     return ListTile(
-      leading: FaIcon(icon, color: Colors.deepPurple, size: 22),
-      title: Text(contact, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+      leading: FaIcon(icon, color: const Color(0xFF4B2C82), size: 22),
+      title: Text(contact, style: GoogleFonts.lato(fontSize: 16, fontWeight: FontWeight.w500)),
       onTap: onTap,
       trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black38),
       contentPadding: EdgeInsets.zero,
