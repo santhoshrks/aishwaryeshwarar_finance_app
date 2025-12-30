@@ -3,6 +3,7 @@ import 'package:aishwaryeshwarar_finance/customize_messages_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:ui';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -38,53 +39,78 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
-      appBar: AppBar(
-        title: Text('Settings', style: GoogleFonts.lato()),
-        backgroundColor: const Color(0xFF4B2C82),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildSettingsCard(
-            children: [
-              SwitchListTile(
-                title: Text('Enable Biometric Unlock', style: GoogleFonts.lato()),
-                value: _biometricsEnabled,
-                onChanged: _toggleBiometrics,
-                secondary: const Icon(Icons.fingerprint),
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.pin),
-                title: Text('Change PIN', style: GoogleFonts.lato()),
-                trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePinPage())),
-              ),
-            ],
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Theme.of(context).primaryColor, Colors.black87],
           ),
-          const SizedBox(height: 20),
-          _buildSettingsCard(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.message),
-                title: Text('Customize Messages', style: GoogleFonts.lato()),
-                trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomizeMessagesPage())),
+        ),
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              iconTheme: const IconThemeData(color: Colors.white),
+              title: Text('Settings', style: GoogleFonts.lato(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  _buildGlassCard(
+                    child: SwitchListTile(
+                      title: Text('Enable Biometric Unlock', style: GoogleFonts.lato(color: Colors.white)),
+                      value: _biometricsEnabled,
+                      onChanged: _toggleBiometrics,
+                      secondary: const Icon(Icons.fingerprint, color: Colors.white70),
+                       activeColor: Theme.of(context).colorScheme.secondary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildGlassCard(
+                    child: ListTile(
+                      leading: const Icon(Icons.pin, color: Colors.white70),
+                      title: Text('Change PIN', style: GoogleFonts.lato(color: Colors.white)),
+                      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 18),
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePinPage())),
+                    ),
+                  ),
+                   const SizedBox(height: 16),
+                  _buildGlassCard(
+                    child: ListTile(
+                      leading: const Icon(Icons.message, color: Colors.white70),
+                      title: Text('Customize Messages', style: GoogleFonts.lato(color: Colors.white)),
+                      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 18),
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomizeMessagesPage())),
+                    ),
+                  ),
+                ],
               ),
-            ]
-          )
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSettingsCard({required List<Widget> children}) {
-    return Card(
-      elevation: 2,
-      shadowColor: Colors.black12,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(children: children),
+  Widget _buildGlassCard({required Widget child}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+          ),
+          child: child,
+        ),
+      ),
     );
   }
 }
