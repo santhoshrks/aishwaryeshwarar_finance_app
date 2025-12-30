@@ -6,6 +6,7 @@ import 'package:excel/excel.dart' hide Border;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:io';
+import 'dart:ui';
 
 class ExportReportsPage extends StatefulWidget {
   const ExportReportsPage({super.key});
@@ -31,7 +32,6 @@ class _ExportReportsPageState extends State<ExportReportsPage> {
         if (isStartDate) {
           _startDate = picked;
         } else {
-          // Set endDate to the end of the selected day
           _endDate = DateTime(picked.year, picked.month, picked.day, 23, 59, 59);
         }
       });
@@ -51,39 +51,39 @@ class _ExportReportsPageState extends State<ExportReportsPage> {
     });
 
     try {
-      // 1. Fetch data from Firestore
-      final paymentsSnapshot = await FirebaseFirestore.instance
-          .collectionGroup('payments')
-          .where('paidAt', isGreaterThanOrEqualTo: _startDate)
-          .where('paidAt', isLessThanOrEqualTo: _endDate)
-          .orderBy('paidAt', descending: true)
-          .get();
+      final paymentsSnapshot = await FirebaseFirestore.instance.collectionGroup('payments').get();
 
-      // 2. Create Excel file
       final excel = Excel.createExcel();
       final Sheet sheet = excel['Payments'];
 
-      // Add header row
       sheet.appendRow(['Date', 'Customer Name', 'Loan ID', 'Amount', 'Note']);
 
-      // Add data rows
       for (var doc in paymentsSnapshot.docs) {
         final data = doc.data();
-        sheet.appendRow([
-          DateFormat('dd-MM-yyyy').format((data['paidAt'] as Timestamp).toDate()),
-          data['customerName'] ?? 'N/A',
-          data['loanIdString'] ?? 'N/A',
-          data['amount'] ?? 0,
-          data['note'] ?? '',
-        ]);
+        
+        //  🔥 CRITICAL BUG FIX: Safely handle missing or invalid 'paidAt' fields.
+        if (data['paidAt'] == null || data['paidAt'] is! Timestamp) {
+          continue; // Skip this record if the date is invalid.
+        }
+
+        final paidAt = (data['paidAt'] as Timestamp).toDate();
+
+        if ((paidAt.isAfter(_startDate!) || paidAt.isAtSameMomentAs(_startDate!)) && paidAt.isBefore(_endDate!)) {
+           sheet.appendRow([
+            DateFormat('dd-MM-yyyy').format(paidAt),
+            data['customerName'] ?? 'N/A',
+            data['loanIdString'] ?? 'N/A',
+            data['amount'] ?? 0,
+            data['note'] ?? '',
+          ]);
+        }
       }
 
-      // 3. Save and share the file
       final Directory? directory = await getExternalStorageDirectory();
-      if(directory == null) {
+      if (directory == null) {
         throw Exception('Could not get external storage directory');
       }
-      
+
       final String fileName = 'Payment_Report_${DateFormat('yyyy-MM-dd').format(DateTime.now())}.xlsx';
       final String filePath = '${directory.path}/$fileName';
 
@@ -95,7 +95,6 @@ class _ExportReportsPageState extends State<ExportReportsPage> {
 
         await Share.shareXFiles([XFile(file.path)], text: 'Here is your payment report.');
       }
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error exporting to Excel: $e')),
@@ -110,35 +109,55 @@ class _ExportReportsPageState extends State<ExportReportsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Export Reports', style: GoogleFonts.lato()),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Theme.of(context).primaryColor, Colors.black87],
+          ),
+        ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Select a date range to export payment data to an Excel file.',
-              style: GoogleFonts.lato(fontSize: 16, color: Colors.grey[700]),
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              iconTheme: const IconThemeData(color: Colors.white),
+              title: Text('Export Reports', style: GoogleFonts.lato(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
-            const SizedBox(height: 32),
-            _buildDatePicker(context, 'Start Date', _startDate, () => _selectDate(context, true)),
-            const SizedBox(height: 16),
-            _buildDatePicker(context, 'End Date', _endDate, () => _selectDate(context, false)),
-            const Spacer(),
-            if (_isExporting)
-              const Center(child: CircularProgressIndicator())
-            else
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.download_for_offline),
-                  label: const Text('Export to Excel'),
-                  onPressed: _exportToExcel,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Select a date range to export payment data to an Excel file.',
+                      style: GoogleFonts.lato(fontSize: 16, color: Colors.white70),
+                    ),
+                    const SizedBox(height: 32),
+                    _buildDatePicker(context, 'Start Date', _startDate, () => _selectDate(context, true)),
+                    const SizedBox(height: 16),
+                    _buildDatePicker(context, 'End Date', _endDate, () => _selectDate(context, false)),
+                    const Spacer(),
+                    if (_isExporting)
+                      const Center(child: CircularProgressIndicator(color: Colors.white))
+                    else
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                           style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.secondary, foregroundColor: Colors.black),
+                          icon: const Icon(Icons.download_for_offline),
+                          label: Text('Export to Excel', style: GoogleFonts.lato(fontWeight: FontWeight.bold, fontSize: 18)),
+                          onPressed: _exportToExcel,
+                        ),
+                      ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
               ),
-            const SizedBox(height: 16),
+            ),
           ],
         ),
       ),
@@ -146,29 +165,31 @@ class _ExportReportsPageState extends State<ExportReportsPage> {
   }
 
   Widget _buildDatePicker(BuildContext context, String title, DateTime? date, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(title, style: GoogleFonts.lato(fontSize: 16)),
-            Row(
+    return ClipRRect(
+       borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+             border: Border.all(color: Colors.white.withOpacity(0.2)),
+          ),
+          child: ListTile(
+            onTap: onTap,
+            title: Text(title, style: GoogleFonts.lato(color: Colors.white70)),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   date != null ? DateFormat('dd MMM yyyy').format(date) : 'Select Date',
-                  style: GoogleFonts.lato(fontSize: 16, fontWeight: FontWeight.w600),
+                  style: GoogleFonts.lato(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
                 ),
-                const SizedBox(width: 8),
-                const Icon(Icons.calendar_today, color: Colors.grey),
+                const SizedBox(width: 12),
+                const Icon(Icons.calendar_today, color: Colors.white70),
               ],
-            )
-          ],
+            ),
+          ),
         ),
       ),
     );
