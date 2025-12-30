@@ -143,43 +143,26 @@ class _CustomerListPageState extends State<CustomerListPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: const Icon(
-                          Icons.edit,
-                          color: Colors.blueGrey,
-                        ),
-                        onPressed: () => _showEditCustomerDialog(
-                          context,
-                          customerDoc.id,
-                          customer,
-                        ),
+                        icon: const Icon(Icons.edit, color: Colors.blueGrey, size: 24),
+                        onPressed: () => _showEditCustomerDialog(context, customerDoc.id, customer),
                       ),
                       IconButton(
-                        icon: const FaIcon(
-                          FontAwesomeIcons.whatsapp,
-                          color: Colors.green,
-                        ),
+                        icon: const Icon(Icons.delete, color: Colors.redAccent, size: 24),
+                        onPressed: () => _deleteCustomer(context, customerDoc),
+                      ),
+                      IconButton(
+                        icon: const FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 28),
                         onPressed: () {
-                          final message =
-                              'Dear $name,\n\n'
-                              'This is a friendly reminder regarding your account.\n'
-                              'Please check the app for details.\n\n'
-                              'Thank you.';
+                          final message = 'Dear $name,\n\nThis is a friendly reminder regarding your account. Please check the app for details.\n\nThank you.';
                           _sendWhatsAppMessage(context, phone, message);
                         },
                       ),
                       IconButton(
-                        icon: const Icon(
-                          Icons.arrow_forward_ios,
-                          size: 18,
-                          color: Colors.black45,
-                        ),
+                        icon: const Icon(Icons.arrow_forward_ios, color: Colors.black45, size: 20),
                         onPressed: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => CustomerLoansPage(
-                              customerId: customerDoc.id,
-                              customerData: customer,
-                            ),
+                            builder: (_) => CustomerLoansPage(customerId: customerDoc.id, customerData: customer),
                           ),
                         ),
                       ),
@@ -254,6 +237,47 @@ class _CustomerListPageState extends State<CustomerListPage> {
       ),
     );
   }
+
+  Future<void> _deleteCustomer(BuildContext context, QueryDocumentSnapshot customerDoc) async {
+    // 1. Check for active loans
+    final loansSnapshot = await customerDoc.reference.collection('loans').where('balance', isGreaterThan: 0).get();
+
+    if (loansSnapshot.docs.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot delete customer with active loans.')));
+      return;
+    }
+
+    // 2. Confirm deletion
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete Customer?', style: GoogleFonts.lato()),
+        content: Text('This will permanently delete this customer and all their closed loans and payments. This action cannot be undone.', style: GoogleFonts.lato()),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancel', style: GoogleFonts.lato())),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Delete', style: GoogleFonts.lato(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    // 3. Delete all loans and their sub-collections of payments
+    final allLoansSnapshot = await customerDoc.reference.collection('loans').get();
+    for (final loan in allLoansSnapshot.docs) {
+      final paymentsSnapshot = await loan.reference.collection('payments').get();
+      for (final payment in paymentsSnapshot.docs) {
+        await payment.reference.delete();
+      }
+      await loan.reference.delete();
+    }
+
+    // 4. Delete the customer
+    await customerDoc.reference.delete();
+
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Customer deleted successfully')));
+  }
+
 
   Future<void> _sendWhatsAppMessage(
       BuildContext context,

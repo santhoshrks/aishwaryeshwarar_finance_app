@@ -1,0 +1,17 @@
+{
+  "appTitle": "ஐஸ்வர்யேஸ்வரர் நிதி",
+  "dashboard": "டாஷ்போர்டு",
+  "todayCollection": "இன்றைய வசூல்",
+  "customersAndLoans": "வாடிக்கையாளர்கள் & கடன்கள்",
+  "interestCalculator": "வட்டி கணிப்பான்",
+  "backupAndRestore": "பேக்கப் & மீட்டமை",
+  "settings": "அமைப்புகள்",
+  "aboutUs": "எங்களை பற்றி",
+  "logout": "வெளியேறு",
+  "confirmLogout": "வெளியேற உறுதி",
+  "confirmLogoutMessage": "நிச்சயமாக வெளியேற வேண்டுமா?",
+  "cancel": "ரத்து",
+  "welcomeBack": "மீண்டும் வரவேற்கிறோம்!",
+  "quickActions": "விரைவு செயல்கள்",
+  "totalCustomers": "மொத்த வாடிக்கையாளர்கள்"
+}

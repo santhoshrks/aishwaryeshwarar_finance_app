@@ -1,0 +1,17 @@
+{
+  "appTitle": "Aishwaryeshwarar Finance",
+  "dashboard": "Dashboard",
+  "todayCollection": "Today's Collection",
+  "customersAndLoans": "Customers & Loans",
+  "interestCalculator": "Interest Calculator",
+  "backupAndRestore": "Backup & Restore",
+  "settings": "Settings",
+  "aboutUs": "About Us",
+  "logout": "Logout",
+  "confirmLogout": "Confirm Logout",
+  "confirmLogoutMessage": "Are you sure you want to logout?",
+  "cancel": "Cancel",
+  "welcomeBack": "Welcome Back!",
+  "quickActions": "Quick Actions",
+  "totalCustomers": "Total Customers"
+}
