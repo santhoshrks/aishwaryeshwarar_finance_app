@@ -12,14 +12,12 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
   final nameCtrl = TextEditingController();
   final phoneCtrl = TextEditingController();
   final businessCtrl = TextEditingController();
-  final addressCtrl = TextEditingController();
 
   Future<void> saveCustomer() async {
     await FirebaseFirestore.instance.collection('customers').add({
       'name': nameCtrl.text,
       'phone': phoneCtrl.text,
       'business': businessCtrl.text,
-      'address': addressCtrl.text,
       'createdAt': Timestamp.now(),
     });
 
@@ -58,14 +56,6 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
               controller: businessCtrl,
               decoration: const InputDecoration(
                 labelText: 'Business Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: addressCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Address',
                 border: OutlineInputBorder(),
               ),
             ),
