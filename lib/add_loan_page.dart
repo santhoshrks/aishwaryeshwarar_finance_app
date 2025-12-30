@@ -3,10 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AddLoanPage extends StatefulWidget {
   final String customerId;
+  final String customerName;
 
   const AddLoanPage({
     super.key,
     required this.customerId,
+    required this.customerName,
   });
 
   @override
@@ -24,8 +26,7 @@ class _AddLoanPageState extends State<AddLoanPage> {
   DateTime startDate = DateTime.now();
   DateTime endDate = DateTime.now().add(const Duration(days: 30));
 
-  int get durationDays =>
-      endDate.difference(startDate).inDays;
+  int get durationDays => endDate.difference(startDate).inDays;
 
   Future<void> saveLoan() async {
     final int principal = int.parse(principalCtrl.text);
@@ -43,6 +44,7 @@ class _AddLoanPageState extends State<AddLoanPage> {
       'principal': principal,
       'interest': interest,
       'balance': balance,
+      'customerName': widget.customerName, // ✅ ADDED CUSTOMER NAME
 
       // 🔔 EMI SYSTEM
       'collectionType': collectionType, // DAILY / WEEKLY
@@ -78,7 +80,6 @@ class _AddLoanPageState extends State<AddLoanPage> {
               ),
             ),
             const SizedBox(height: 16),
-
             TextField(
               controller: principalCtrl,
               keyboardType: TextInputType.number,
@@ -88,7 +89,6 @@ class _AddLoanPageState extends State<AddLoanPage> {
               ),
             ),
             const SizedBox(height: 16),
-
             TextField(
               controller: interestCtrl,
               keyboardType: TextInputType.number,
@@ -98,8 +98,6 @@ class _AddLoanPageState extends State<AddLoanPage> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // 🔽 COLLECTION TYPE
             DropdownButtonFormField<String>(
               value: collectionType,
               items: const [
@@ -123,8 +121,6 @@ class _AddLoanPageState extends State<AddLoanPage> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // 💰 EMI AMOUNT
             TextField(
               controller: emiCtrl,
               keyboardType: TextInputType.number,
@@ -134,8 +130,6 @@ class _AddLoanPageState extends State<AddLoanPage> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // 📅 START DATE
             ListTile(
               title: Text(
                 'Start Date: ${startDate.day}-${startDate.month}-${startDate.year}',
@@ -153,8 +147,6 @@ class _AddLoanPageState extends State<AddLoanPage> {
                 }
               },
             ),
-
-            // 📅 END DATE
             ListTile(
               title: Text(
                 'End Date: ${endDate.day}-${endDate.month}-${endDate.year}',
@@ -172,10 +164,8 @@ class _AddLoanPageState extends State<AddLoanPage> {
                 }
               },
             ),
-
             Text('Duration: $durationDays days'),
             const SizedBox(height: 20),
-
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(

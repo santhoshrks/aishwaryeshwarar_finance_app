@@ -1,8 +1,10 @@
 import 'package:aishwaryeshwarar_finance/about_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 import 'customer_list_page.dart';
 import 'dashboard_page.dart';
@@ -10,9 +12,16 @@ import 'interest_calculator_page.dart';
 import 'backup_restore_page.dart';
 import 'today_collection_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+
+  // ================= LOGOUT =================
   Future<void> _logout(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -35,25 +44,51 @@ class HomePage extends StatelessWidget {
     if (confirm == true) {
       await const FlutterSecureStorage().deleteAll();
       await FirebaseAuth.instance.signOut();
-      Navigator.of(context).pushReplacementNamed('/login');
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      }
     }
   }
 
+  // ================= UI =================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
+      appBar: _buildAppBar(),
       drawer: _buildDrawer(context),
-      body: CustomScrollView(
-        slivers: [
-          _buildSliverAppBar(context),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
           _buildHeader(),
+          const SizedBox(height: 24),
+          _buildSummaryCard(),
+          const SizedBox(height: 24),
+          _buildSectionTitle('Quick Actions'),
+          const SizedBox(height: 16),
           _buildActionsGrid(context),
         ],
       ),
     );
   }
 
+  // ================= APP BAR =================
+  AppBar _buildAppBar() {
+    return AppBar(
+      backgroundColor: const Color(0xFFF0F2F5),
+      elevation: 0,
+      iconTheme: const IconThemeData(color: Color(0xFF333333)),
+      title: Text(
+        'Dashboard',
+        style: GoogleFonts.lato(
+          color: const Color(0xFF333333),
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  // ================= DRAWER =================
   Drawer _buildDrawer(BuildContext context) {
     return Drawer(
       child: ListView(
@@ -63,8 +98,6 @@ class HomePage extends StatelessWidget {
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [Color(0xFF4B2C82), Color(0xFF6A4BC7)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
               ),
             ),
             child: Text(
@@ -86,7 +119,7 @@ class HomePage extends StatelessWidget {
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout, color: Color(0xFF4B2C82)),
-            title: Text('Logout', style: GoogleFonts.lato(fontSize: 16)),
+            title: Text('Logout', style: GoogleFonts.lato()),
             onTap: () => _logout(context),
           ),
         ],
@@ -94,86 +127,127 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  SliverAppBar _buildSliverAppBar(BuildContext context) {
-    return SliverAppBar(
-      backgroundColor: const Color(0xFF4B2C82),
-      floating: true,
-      pinned: true,
-      expandedHeight: 180.0,
-      flexibleSpace: FlexibleSpaceBar(
-        title: Text(
-          'Aishwaryeshwarar Finance',
-          style: GoogleFonts.lato(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        background: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF4B2C82), Color(0xFF6A4BC7)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-      ),
-      leading: Builder(
-        builder: (context) => IconButton(
-          icon: const Icon(Icons.menu, color: Colors.white),
-          onPressed: () => Scaffold.of(context).openDrawer(),
-        ),
+  // ================= HEADER =================
+  Widget _buildHeader() {
+    return Text(
+      'Welcome Back!',
+      style: GoogleFonts.lato(
+        fontSize: 32,
+        fontWeight: FontWeight.bold,
+        color: const Color(0xFF333333),
       ),
     );
   }
 
-  SliverToBoxAdapter _buildHeader() {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Welcome Back!',
-              style: GoogleFonts.lato(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF333333),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Here are your quick actions',
-              style: GoogleFonts.lato(
-                fontSize: 18,
-                color: Colors.black54,
-              ),
-            ),
-          ],
+  // ================= SUMMARY =================
+  Widget _buildSummaryCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF4B2C82), Color(0xFF6A4BC7)],
         ),
+        borderRadius: BorderRadius.circular(18),
       ),
-    );
-  }
-
-  SliverPadding _buildActionsGrid(BuildContext context) {
-    return SliverPadding(
-      padding: const EdgeInsets.all(16.0),
-      sliver: SliverGrid.count(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _mainCard(context, icon: Icons.today, title: 'Today Collection', page: const TodayCollectionPage()),
-          _mainCard(context, icon: Icons.people, title: 'Customers & Loans', page: const CustomerListPage()),
-          _mainCard(context, icon: Icons.bar_chart, title: 'Dashboard', page: const DashboardPage()),
-          _mainCard(context, icon: Icons.calculate, title: 'Interest Calculator', page: const InterestCalculatorPage()),
+          _buildTotalCustomers(),
+          _buildTodaysCollection(), // 🔥 FIXED
         ],
       ),
     );
   }
 
+  Widget _buildTotalCustomers() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('customers').snapshots(),
+      builder: (context, snapshot) {
+        final count = snapshot.data?.docs.length ?? 0;
+        return _summaryItem(count.toString(), 'Total Customers');
+      },
+    );
+  }
+
+  // ================= 🔥 FIXED TODAY COLLECTION =================
+  Widget _buildTodaysCollection() {
+    final today = DateTime.now();
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collectionGroup('payments')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return _summaryItem('₹0', "Today's Collection");
+        }
+
+        double total = 0;
+
+        for (var doc in snapshot.data!.docs) {
+          final data = doc.data() as Map<String, dynamic>?;
+
+          if (data == null) continue;
+
+          final amount = (data['amount'] as num?) ?? 0;
+          final paidAt = data['paidAt'];
+
+          if (paidAt is Timestamp) {
+            final date = paidAt.toDate();
+            if (date.year == today.year &&
+                date.month == today.month &&
+                date.day == today.day) {
+              total += amount;
+            }
+          }
+        }
+
+        final formatted = NumberFormat.currency(
+          locale: 'en_IN',
+          symbol: '₹',
+          decimalDigits: 0,
+        ).format(total);
+
+        return _summaryItem(formatted, "Today's Collection");
+      },
+    );
+  }
+
+  Widget _summaryItem(String value, String label) {
+    return Column(
+      children: [
+        Text(value,
+            style: GoogleFonts.lato(
+                fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+        const SizedBox(height: 4),
+        Text(label,
+            style: GoogleFonts.lato(fontSize: 14, color: Colors.white70)),
+      ],
+    );
+  }
+
+  // ================= QUICK ACTIONS =================
+  Widget _buildActionsGrid(BuildContext context) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      children: [
+        _mainCard(context, Icons.today, 'Today Collection', const TodayCollectionPage()),
+        _mainCard(context, Icons.people, 'Customers & Loans', const CustomerListPage()),
+        _mainCard(context, Icons.bar_chart, 'Dashboard', const DashboardPage()),
+        _mainCard(context, Icons.calculate, 'Interest Calculator', const InterestCalculatorPage()),
+      ],
+    );
+  }
+
+  // ================= HELPERS =================
   ListTile _drawerItem(BuildContext context, IconData icon, String title, Widget page) {
     return ListTile(
       leading: Icon(icon, color: const Color(0xFF4B2C82)),
-      title: Text(title, style: GoogleFonts.lato(fontSize: 16)),
+      title: Text(title, style: GoogleFonts.lato()),
       onTap: () {
         Navigator.pop(context);
         Navigator.push(context, MaterialPageRoute(builder: (_) => page));
@@ -181,38 +255,30 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _mainCard(BuildContext context, {required IconData icon, required String title, required Widget page}) {
+  Widget _mainCard(BuildContext context, IconData icon, String title, Widget page) {
     return InkWell(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => page)),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 14,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 12)],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 45, color: const Color(0xFF4B2C82)),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.lato(
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF333333),
-              ),
-            ),
+            Icon(icon, size: 40, color: const Color(0xFF4B2C82)),
+            const SizedBox(height: 12),
+            Text(title, style: GoogleFonts.lato(fontWeight: FontWeight.w600)),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(title,
+        style: GoogleFonts.lato(
+            fontSize: 20, fontWeight: FontWeight.bold));
   }
 }

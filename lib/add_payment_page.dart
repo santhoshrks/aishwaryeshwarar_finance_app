@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AddPaymentPage extends StatefulWidget {
   final String customerId;
@@ -22,7 +23,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
   final noteCtrl = TextEditingController();
 
   Future<void> savePayment() async {
-    final int amount = int.parse(paymentCtrl.text);
+    final int amount = int.tryParse(paymentCtrl.text) ?? 0;
 
     if (amount <= 0 || amount > widget.currentBalance) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -47,15 +48,17 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
 
     await loanRef.update({'balance': newBalance});
 
-    Navigator.pop(context);
+    // Return the paid amount to the previous screen
+    Navigator.pop(context, amount);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF0F2F5),
       appBar: AppBar(
-        title: const Text('Add Payment'),
-        backgroundColor: Colors.deepPurple,
+        title: Text('Add Payment', style: GoogleFonts.lato()),
+        backgroundColor: const Color(0xFF4B2C82),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -63,8 +66,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           children: [
             Text(
               'Current Balance: ₹${widget.currentBalance}',
-              style: const TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.bold),
+              style: GoogleFonts.lato(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             TextField(
@@ -84,13 +86,12 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               ),
             ),
             const SizedBox(height: 25),
-            ElevatedButton(
-              onPressed: savePayment,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                padding: const EdgeInsets.all(14),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: savePayment,
+                child: Text('Save Payment', style: GoogleFonts.lato()),
               ),
-              child: const Text('Save Payment'),
             ),
           ],
         ),
