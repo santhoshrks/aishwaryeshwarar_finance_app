@@ -1,5 +1,5 @@
 {
-  "appTitle": "ஐஸ்வர்யேஸ்வரர் நிதி",
+  "appTitle": "ஐஷ்வர்யேஷ்வரர் நிதி",
   "dashboard": "டாஷ்போர்டு",
   "todayCollection": "இன்றைய வசூல்",
   "customersAndLoans": "வாடிக்கையாளர்கள் & கடன்கள்",
@@ -13,5 +13,14 @@
   "cancel": "ரத்து",
   "welcomeBack": "மீண்டும் வரவேற்கிறோம்!",
   "quickActions": "விரைவு செயல்கள்",
-  "totalCustomers": "மொத்த வாடிக்கையாளர்கள்"
+  "totalCustomers": "மொத்த வாடிக்கையாளர்கள்",
+
+  "login": "உள்நுழை",
+  "signInToContinue": "தொடர உள்நுழைக",
+  "email": "மின்னஞ்சல்",
+  "password": "கடவுச்சொல்",
+  "enterPin": "பின்னை உள்ளிடவும்",
+  "pin": "பின்",
+  "unlock": "திற",
+  "forgotPin": "பின்னை மறந்துவிட்டீர்களா?"
 }

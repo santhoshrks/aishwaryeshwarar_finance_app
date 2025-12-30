@@ -3,10 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:ui';
 
-import 'add_loan_page.dart';
-import 'add_payment_page.dart';
-import 'payment_history_page.dart';
+import 'package:aishwaryeshwarar_finance/add_loan_page.dart';
+import 'package:aishwaryeshwarar_finance/add_payment_page.dart';
+import 'package:aishwaryeshwarar_finance/payment_history_page.dart';
 
 class CustomerLoansPage extends StatelessWidget {
   final String customerId;
@@ -27,11 +28,11 @@ class CustomerLoansPage extends StatelessWidget {
   Color statusColor(String status) {
     switch (status) {
       case 'CLOSED':
-        return Colors.green.shade700;
+        return Colors.green.shade300;
       case 'OVERDUE':
-        return Colors.red.shade700;
+        return Colors.red.shade300;
       default:
-        return Colors.orange.shade700;
+        return Colors.orange.shade300;
     }
   }
 
@@ -51,14 +52,13 @@ class CustomerLoansPage extends StatelessWidget {
       );
     }
   }
-  
-  // ================= DELETE LOAN =================
+
   Future<void> _deleteLoan(BuildContext context, QueryDocumentSnapshot loanDoc) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Delete Loan?', style: GoogleFonts.lato()),
-        content: Text('This will permanently delete this loan and all its associated payments. This action cannot be undone.', style: GoogleFonts.lato()),
+        content: Text('This action cannot be undone.', style: GoogleFonts.lato()),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancel', style: GoogleFonts.lato())),
           TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Delete', style: GoogleFonts.lato(color: Colors.red))),
@@ -68,60 +68,53 @@ class CustomerLoansPage extends StatelessWidget {
 
     if (confirm != true) return;
 
-    // Delete all payments in the sub-collection first
     final paymentsSnapshot = await loanDoc.reference.collection('payments').get();
     for (final payment in paymentsSnapshot.docs) {
       await payment.reference.delete();
     }
-
-    // Delete the loan document itself
     await loanDoc.reference.delete();
     
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Loan deleted successfully', style: GoogleFonts.lato())));
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
-      appBar: _buildAppBar(context),
+      backgroundColor: Colors.transparent,
       floatingActionButton: _buildFloatingActionButton(context),
-      body: Column(
-        children: [
-          _buildCustomerHeader(),
-          _buildLoanList(context),
-        ],
-      ),
-    );
-  }
-
-  AppBar _buildAppBar(BuildContext context) {
-    return AppBar(
-      backgroundColor: const Color(0xFFF0F2F5),
-      elevation: 0,
-      iconTheme: const IconThemeData(color: Color(0xFF333333)),
-      title: Text(
-        customerData['name'] ?? 'Customer Loans',
-        style: GoogleFonts.lato(
-          color: const Color(0xFF333333),
-          fontWeight: FontWeight.bold,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Theme.of(context).primaryColor, Colors.black87],
+          ),
+        ),
+        child: Column(
+          children: [
+            _buildAppBar(context),
+            _buildCustomerHeader(),
+            _buildLoanList(context),
+          ],
         ),
       ),
     );
   }
 
+  Widget _buildAppBar(BuildContext context) {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      iconTheme: const IconThemeData(color: Colors.white),
+      title: Text(customerData['name'] ?? 'Customer Loans', style: GoogleFonts.lato(color: Colors.white, fontWeight: FontWeight.bold)),
+    );
+  }
+
   FloatingActionButton _buildFloatingActionButton(BuildContext context) {
     return FloatingActionButton(
-      backgroundColor: const Color(0xFF4B2C82),
-      onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (_) => AddLoanPage(
-                    customerId: customerId,
-                    customerName: customerData['name'] ?? '',
-                  ))),
-      child: const Icon(Icons.add, color: Colors.white),
+      backgroundColor: Theme.of(context).colorScheme.secondary,
+      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AddLoanPage(customerId: customerId, customerName: customerData['name'] ?? ''))),
+      child: const Icon(Icons.add, color: Colors.black),
     );
   }
 
@@ -129,13 +122,12 @@ class CustomerLoansPage extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('📞 ${customerData['phone'] ?? ''}', style: GoogleFonts.lato(fontSize: 16)),
+          Text('📞 ${customerData['phone'] ?? ''}', style: GoogleFonts.lato(fontSize: 16, color: Colors.white)),
           const SizedBox(height: 4),
-          Text('🏪 ${customerData['business'] ?? ''}', style: GoogleFonts.lato(fontSize: 16)),
+          Text('🏪 ${customerData['business'] ?? ''}', style: GoogleFonts.lato(fontSize: 16, color: Colors.white70)),
         ],
       ),
     );
@@ -147,11 +139,11 @@ class CustomerLoansPage extends StatelessWidget {
         stream: FirebaseFirestore.instance.collection('customers').doc(customerId).collection('loans').orderBy('createdAt', descending: true).snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator(color: Colors.white));
           }
           final loans = snapshot.data!.docs;
           if (loans.isEmpty) {
-            return Center(child: Text('No loans found for this customer.', style: GoogleFonts.lato()));
+            return Center(child: Text('No loans found for this customer.', style: GoogleFonts.lato(color: Colors.white)));
           }
           return ListView.builder(
             padding: const EdgeInsets.all(16),
@@ -172,76 +164,73 @@ class CustomerLoansPage extends StatelessWidget {
 
   Widget _buildLoanCard(BuildContext context, QueryDocumentSnapshot loanDoc, Map<String, dynamic> loan, String status, DateTime startDate, DateTime endDate) {
     final daysLeft = remainingDays(endDate);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shadowColor: Colors.black12,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Loan ID: ${loan['loanId']}', style: GoogleFonts.lato(fontWeight: FontWeight.bold, fontSize: 16)),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: statusColor(status), borderRadius: BorderRadius.circular(6)),
-                  child: Text(status, style: GoogleFonts.lato(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                ),
-              ],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
             ),
-            const Divider(height: 24),
-            _buildLoanDetailRow('Principal:', '₹${loan['principal']}'),
-            _buildLoanDetailRow('Interest:', '₹${loan['interest']}'),
-            _buildLoanDetailRow('Balance:', '₹${loan['balance']}', isBold: true),
-            const Divider(height: 24),
-            _buildLoanDetailRow('Start Date:', DateFormat('dd MMM yyyy').format(startDate)),
-            _buildLoanDetailRow('End Date:', DateFormat('dd MMM yyyy').format(endDate)),
-            _buildLoanDetailRow('Remaining Days:', daysLeft.toString(), isBold: true),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                 IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.redAccent, size: 24),
-                  onPressed: () => _deleteLoan(context, loanDoc),
-                ),
-                 IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.blueGrey, size: 24),
-                  onPressed: () => _showEditLoanDialog(context, loanDoc, loan),
-                ),
-                TextButton.icon(
-                  icon: const Icon(Icons.history, size: 20), 
-                  label: Text('History', style: GoogleFonts.lato()),
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PaymentHistoryPage(customerId: customerId, loanId: loanDoc.id))),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.add, size: 20),
-                  label: Text('Add Payment', style: GoogleFonts.lato()),
-                  onPressed: () async {
-                    final paymentAmount = await Navigator.push<int>(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => AddPaymentPage(
-                          customerId: customerId,
-                          loanId: loanDoc.id,
-                          currentBalance: loan['balance'],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Loan ID: ${loan['loanId']}', style: GoogleFonts.lato(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: statusColor(status), borderRadius: BorderRadius.circular(6)),
+                    child: Text(status, style: GoogleFonts.lato(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12)),
+                  ),
+                ],
+              ),
+              const Divider(height: 24, color: Colors.white30),
+              _buildLoanDetailRow('Principal:', '₹${loan['principal']}'),
+              _buildLoanDetailRow('Interest:', '₹${loan['interest']}'),
+              _buildLoanDetailRow('Balance:', '₹${loan['balance']}', isBold: true),
+              const Divider(height: 24, color: Colors.white30),
+              _buildLoanDetailRow('Start Date:', DateFormat('dd MMM yyyy').format(startDate)),
+              _buildLoanDetailRow('End Date:', DateFormat('dd MMM yyyy').format(endDate)),
+              _buildLoanDetailRow('Remaining Days:', daysLeft.toString(), isBold: true),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(icon: const Icon(Icons.delete, color: Colors.redAccent), onPressed: () => _deleteLoan(context, loanDoc), tooltip: 'Delete Loan'),
+                  IconButton(icon: Icon(Icons.edit, color: Colors.blue[200]), onPressed: () => _showEditLoanDialog(context, loanDoc, loan), tooltip: 'Edit Loan'),
+                  IconButton(icon: const Icon(Icons.history, color: Colors.white70), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PaymentHistoryPage(customerId: customerId, loanId: loanDoc.id))), tooltip: 'View History'),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.secondary, foregroundColor: Colors.black),
+                    icon: const Icon(Icons.add, size: 20),
+                    label: Text('Add Payment', style: GoogleFonts.lato()),
+                    onPressed: () async {
+                      final paymentAmount = await Navigator.push<int>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AddPaymentPage(
+                            customerId: customerId,
+                            loanId: loanDoc.id,
+                            currentBalance: loan['balance'],
+                          ),
                         ),
-                      ),
-                    );
-                    if (paymentAmount != null && paymentAmount > 0) {
-                      final message = 'Dear ${customerData['name']}, we have successfully received your payment of ₹$paymentAmount. Thank you.';
-                      _sendWhatsAppMessage(context, customerData['phone'], message);
-                    }
-                  },
-                ),
-              ],
-            ),
-          ],
+                      );
+                      if (paymentAmount != null && paymentAmount > 0) {
+                        final message = 'Dear ${customerData['name']}, we have successfully received your payment of ₹$paymentAmount. Thank you.';
+                        _sendWhatsAppMessage(context, customerData['phone'], message);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -253,13 +242,13 @@ class CustomerLoansPage extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: GoogleFonts.lato(color: Colors.black54)),
+          Text(label, style: GoogleFonts.lato(color: Colors.white70)),
           Text(
             value,
             style: GoogleFonts.lato(
               fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
               fontSize: isBold ? 16 : 14,
-              color: isBold && label == 'Remaining Days:' ? (int.tryParse(value) ?? 0) < 7 ? Colors.red : Colors.green : Colors.black87,
+              color: Colors.white,
             ),
           ),
         ],

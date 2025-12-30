@@ -13,5 +13,14 @@
   "cancel": "Cancel",
   "welcomeBack": "Welcome Back!",
   "quickActions": "Quick Actions",
-  "totalCustomers": "Total Customers"
+  "totalCustomers": "Total Customers",
+
+  "login": "Login",
+  "signInToContinue": "Sign in to continue",
+  "email": "Email",
+  "password": "Password",
+  "enterPin": "Enter PIN",
+  "pin": "PIN",
+  "unlock": "Unlock",
+  "forgotPin": "Forgot PIN?"
 }

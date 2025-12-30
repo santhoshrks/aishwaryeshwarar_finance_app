@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:ui';
 
 class AddPaymentPage extends StatefulWidget {
   final String customerId;
@@ -48,52 +49,76 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
 
     await loanRef.update({'balance': newBalance});
 
-    // Return the paid amount to the previous screen
     Navigator.pop(context, amount);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
-      appBar: AppBar(
-        title: Text('Add Payment', style: GoogleFonts.lato()),
-        backgroundColor: const Color(0xFF4B2C82),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Theme.of(context).primaryColor, Colors.black87],
+          ),
+        ),
         child: Column(
           children: [
-            Text(
-              'Current Balance: ₹${widget.currentBalance}',
-              style: GoogleFonts.lato(fontSize: 18, fontWeight: FontWeight.bold),
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              iconTheme: const IconThemeData(color: Colors.white),
+              title: Text('Add Payment', style: GoogleFonts.lato(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: paymentCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Payment Amount',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 15),
-            TextField(
-              controller: noteCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Note (optional)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 25),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: savePayment,
-                child: Text('Save Payment', style: GoogleFonts.lato()),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Text(
+                      'Current Balance: ₹${widget.currentBalance}',
+                      style: GoogleFonts.lato(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    const SizedBox(height: 32),
+                    _buildTextField(controller: paymentCtrl, hint: 'Payment Amount', keyboardType: TextInputType.number),
+                    const SizedBox(height: 16),
+                    _buildTextField(controller: noteCtrl, hint: 'Note (optional)'),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: savePayment,
+                        child: Text('Save Payment', style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({required TextEditingController controller, required String hint, TextInputType? keyboardType}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white.withOpacity(0.1),
+            hintText: hint,
+            hintStyle: const TextStyle(color: Colors.white70),
+            border: InputBorder.none,
+          ),
         ),
       ),
     );

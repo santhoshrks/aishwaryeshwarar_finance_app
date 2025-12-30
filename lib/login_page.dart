@@ -22,11 +22,16 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _isPinLogin = false;
   bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
     _checkPinStatus();
+    // Clear error message when user starts typing
+    _emailCtrl.addListener(() => setState(() => _errorMessage = null));
+    _passwordCtrl.addListener(() => setState(() => _errorMessage = null));
+    _pinCtrl.addListener(() => setState(() => _errorMessage = null));
   }
 
   Future<void> _checkPinStatus() async {
@@ -46,9 +51,7 @@ class _LoginPageState extends State<LoginPage> {
       if (canAuth) {
         final didAuthenticate = await _localAuth.authenticate(
           localizedReason: 'Please authenticate to login',
-          options: const AuthenticationOptions(
-            biometricOnly: true,
-          ),
+          options: const AuthenticationOptions(biometricOnly: true),
         );
         if (didAuthenticate) {
           _navigateToHome();
@@ -62,6 +65,7 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _loginWithEmail() async {
     setState(() {
       _isLoading = true;
+      _errorMessage = null;
     });
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -71,9 +75,9 @@ class _LoginPageState extends State<LoginPage> {
       _navigateToPinSetup();
     } on FirebaseAuthException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Login failed. Please try again.')),
-        );
+        setState(() {
+          _errorMessage = e.message ?? 'Login failed. Please try again.';
+        });
       }
     } finally {
       if (mounted) {
@@ -89,9 +93,9 @@ class _LoginPageState extends State<LoginPage> {
     if (storedPin == _pinCtrl.text.trim()) {
       _navigateToHome();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Incorrect PIN')),
-      );
+      setState(() {
+        _errorMessage = 'Incorrect PIN';
+      });
     }
   }
 
@@ -144,15 +148,11 @@ class _LoginPageState extends State<LoginPage> {
       key: const ValueKey('emailLogin'),
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.lock, size: 80, color: Colors.white),
+        _buildLogo(),
         const SizedBox(height: 20),
         Text(
           'Welcome Back',
-          style: GoogleFonts.lato(
-            color: Colors.white,
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-          ),
+          style: GoogleFonts.lato(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 10),
         Text(
@@ -163,6 +163,7 @@ class _LoginPageState extends State<LoginPage> {
         _buildTextField(controller: _emailCtrl, hint: 'Email', icon: Icons.email),
         const SizedBox(height: 20),
         _buildTextField(controller: _passwordCtrl, hint: 'Password', icon: Icons.lock, obscureText: true),
+        if (_errorMessage != null) _buildErrorWidget(),
         const SizedBox(height: 40),
         _buildLoginButton(onPressed: _loginWithEmail, text: 'LOGIN'),
       ],
@@ -174,18 +175,15 @@ class _LoginPageState extends State<LoginPage> {
       key: const ValueKey('pinLogin'),
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.lock_person_sharp, size: 80, color: Colors.white),
+        _buildLogo(),
         const SizedBox(height: 20),
         Text(
           'Enter PIN',
-          style: GoogleFonts.lato(
-            color: Colors.white,
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-          ),
+          style: GoogleFonts.lato(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 40),
         _buildTextField(controller: _pinCtrl, hint: 'PIN', icon: Icons.pin, obscureText: true, isPin: true),
+        if (_errorMessage != null) _buildErrorWidget(),
         const SizedBox(height: 40),
         _buildLoginButton(onPressed: _loginWithPin, text: 'UNLOCK'),
         const SizedBox(height: 20),
@@ -194,10 +192,7 @@ class _LoginPageState extends State<LoginPage> {
           children: [
             TextButton(
               onPressed: _forgotPin,
-              child: Text(
-                'Forgot PIN?',
-                style: GoogleFonts.lato(color: Colors.white70),
-              ),
+              child: Text('Forgot PIN?', style: GoogleFonts.lato(color: Colors.white70)),
             ),
             IconButton(
               onPressed: _authenticateWithBiometrics,
@@ -207,6 +202,28 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ],
     );
+  }
+  
+  Widget _buildLogo() {
+    return CircleAvatar(
+      radius: 50,
+      backgroundColor: Colors.white.withOpacity(0.1),
+      child: Text(
+        'AF',
+        style: GoogleFonts.lato(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.white),
+      ),
+    );
+  }
+  
+  Widget _buildErrorWidget() {
+      return Padding(
+        padding: const EdgeInsets.only(top: 16.0),
+        child: Text(
+          _errorMessage!,
+          style: GoogleFonts.lato(color: Colors.yellow.shade300, fontSize: 14),
+          textAlign: TextAlign.center,
+        ),
+      );
   }
 
   Widget _buildTextField({
@@ -250,10 +267,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
         child: Text(
           text,
-          style: GoogleFonts.lato(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: GoogleFonts.lato(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
     );

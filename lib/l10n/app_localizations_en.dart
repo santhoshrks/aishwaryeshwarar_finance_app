@@ -52,4 +52,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get totalCustomers => 'Total Customers';
+
+  @override
+  String get login => 'Login';
+
+  @override
+  String get signInToContinue => 'Sign in to continue';
+
+  @override
+  String get email => 'Email';
+
+  @override
+  String get password => 'Password';
+
+  @override
+  String get enterPin => 'Enter PIN';
+
+  @override
+  String get pin => 'PIN';
+
+  @override
+  String get unlock => 'Unlock';
+
+  @override
+  String get forgotPin => 'Forgot PIN?';
 }

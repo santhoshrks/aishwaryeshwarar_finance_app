@@ -9,7 +9,7 @@ class AppLocalizationsTa extends AppLocalizations {
   AppLocalizationsTa([String locale = 'ta']) : super(locale);
 
   @override
-  String get appTitle => 'ஐஸ்வர்யேஸ்வரர் நிதி';
+  String get appTitle => 'ஐஷ்வர்யேஷ்வரர் நிதி';
 
   @override
   String get dashboard => 'டாஷ்போர்டு';
@@ -52,4 +52,28 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get totalCustomers => 'மொத்த வாடிக்கையாளர்கள்';
+
+  @override
+  String get login => 'உள்நுழை';
+
+  @override
+  String get signInToContinue => 'தொடர உள்நுழைக';
+
+  @override
+  String get email => 'மின்னஞ்சல்';
+
+  @override
+  String get password => 'கடவுச்சொல்';
+
+  @override
+  String get enterPin => 'பின்னை உள்ளிடவும்';
+
+  @override
+  String get pin => 'பின்';
+
+  @override
+  String get unlock => 'திற';
+
+  @override
+  String get forgotPin => 'பின்னை மறந்துவிட்டீர்களா?';
 }

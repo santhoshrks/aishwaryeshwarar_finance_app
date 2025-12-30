@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'dart:ui';
+
+import 'package:intl/intl.dart';
 
 class AddLoanPage extends StatefulWidget {
   final String customerId;
@@ -29,9 +33,14 @@ class _AddLoanPageState extends State<AddLoanPage> {
   int get durationDays => endDate.difference(startDate).inDays;
 
   Future<void> saveLoan() async {
-    final int principal = int.parse(principalCtrl.text);
-    final int interest = int.parse(interestCtrl.text);
-    final int emiAmount = int.parse(emiCtrl.text);
+    final int principal = int.tryParse(principalCtrl.text) ?? 0;
+    final int interest = int.tryParse(interestCtrl.text) ?? 0;
+    final int emiAmount = int.tryParse(emiCtrl.text) ?? 0;
+
+    if(principal <= 0 || interest <= 0 || emiAmount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all fields')));
+      return;
+    }
 
     final int balance = principal + interest;
 
@@ -44,17 +53,12 @@ class _AddLoanPageState extends State<AddLoanPage> {
       'principal': principal,
       'interest': interest,
       'balance': balance,
-      'customerName': widget.customerName, // ✅ ADDED CUSTOMER NAME
-
-      // 🔔 EMI SYSTEM
-      'collectionType': collectionType, // DAILY / WEEKLY
+      'customerName': widget.customerName,
+      'collectionType': collectionType,
       'emiAmount': emiAmount,
-
-      // 📅 DATES
       'startDate': Timestamp.fromDate(startDate),
       'endDate': Timestamp.fromDate(endDate),
       'durationDays': durationDays,
-
       'createdAt': Timestamp.now(),
     });
 
@@ -64,116 +68,143 @@ class _AddLoanPageState extends State<AddLoanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Loan'),
-        backgroundColor: Colors.deepPurple,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Theme.of(context).primaryColor, Colors.black87],
+          ),
+        ),
         child: Column(
           children: [
-            TextField(
-              controller: loanIdCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Loan ID',
-                border: OutlineInputBorder(),
-              ),
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              iconTheme: const IconThemeData(color: Colors.white),
+              title: Text('Add New Loan', style: GoogleFonts.lato(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: principalCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Principal Amount',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: interestCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Interest Amount',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: collectionType,
-              items: const [
-                DropdownMenuItem(
-                  value: 'DAILY',
-                  child: Text('Daily Collection'),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    _buildTextField(controller: loanIdCtrl, hint: 'Loan ID (Optional)'),
+                    const SizedBox(height: 16),
+                    _buildTextField(controller: principalCtrl, hint: 'Principal Amount', keyboardType: TextInputType.number),
+                    const SizedBox(height: 16),
+                    _buildTextField(controller: interestCtrl, hint: 'Interest Amount', keyboardType: TextInputType.number),
+                    const SizedBox(height: 16),
+                    _buildTextField(controller: emiCtrl, hint: 'EMI Amount', keyboardType: TextInputType.number),
+                    const SizedBox(height: 16),
+                    _buildDropdown(),
+                    const SizedBox(height: 16),
+                    _buildDatePicker('Start Date', startDate, (d) => setState(() => startDate = d)),
+                    const SizedBox(height: 16),
+                     _buildDatePicker('End Date', endDate, (d) => setState(() => endDate = d)),
+                    const SizedBox(height: 16),
+                    Text('Duration: $durationDays days', style: GoogleFonts.lato(color: Colors.white, fontSize: 16)),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.secondary, foregroundColor: Colors.black),
+                        onPressed: saveLoan,
+                        child: Text('Save Loan', style: GoogleFonts.lato(fontWeight: FontWeight.bold, fontSize: 18)),
+                      ),
+                    ),
+                  ],
                 ),
-                DropdownMenuItem(
-                  value: 'WEEKLY',
-                  child: Text('Weekly Collection'),
-                ),
-              ],
-              onChanged: (v) {
-                setState(() {
-                  collectionType = v!;
-                });
-              },
-              decoration: const InputDecoration(
-                labelText: 'Collection Type',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: emiCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'EMI Amount',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              title: Text(
-                'Start Date: ${startDate.day}-${startDate.month}-${startDate.year}',
-              ),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: () async {
-                final d = await showDatePicker(
-                  context: context,
-                  initialDate: startDate,
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime(2100),
-                );
-                if (d != null) {
-                  setState(() => startDate = d);
-                }
-              },
-            ),
-            ListTile(
-              title: Text(
-                'End Date: ${endDate.day}-${endDate.month}-${endDate.year}',
-              ),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: () async {
-                final d = await showDatePicker(
-                  context: context,
-                  initialDate: endDate,
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime(2100),
-                );
-                if (d != null) {
-                  setState(() => endDate = d);
-                }
-              },
-            ),
-            Text('Duration: $durationDays days'),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: saveLoan,
-                child: const Text('Save Loan'),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({required TextEditingController controller, required String hint, TextInputType? keyboardType}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white.withOpacity(0.1),
+            hintText: hint,
+            hintStyle: const TextStyle(color: Colors.white70),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16)
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdown() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+            ),
+          child: DropdownButtonFormField<String>(
+            value: collectionType,
+            dropdownColor: Colors.black87,
+            style: const TextStyle(color: Colors.white),
+            items: const [
+              DropdownMenuItem(value: 'DAILY', child: Text('Daily Collection')),
+              DropdownMenuItem(value: 'WEEKLY', child: Text('Weekly Collection')),
+            ],
+            onChanged: (v) {
+              if (v != null) {
+                setState(() {
+                  collectionType = v;
+                });
+              }
+            },
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDatePicker(String label, DateTime date, Function(DateTime) onSelect) {
+    return ClipRRect(
+       borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+           decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+            ),
+          child: ListTile(
+            title: Text(label, style: GoogleFonts.lato(color: Colors.white70)),
+            subtitle: Text(DateFormat('dd MMM yyyy').format(date), style: GoogleFonts.lato(color: Colors.white, fontSize: 16)),
+            trailing: const Icon(Icons.calendar_today, color: Colors.white70),
+            onTap: () async {
+              final d = await showDatePicker(
+                context: context,
+                initialDate: date,
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2100),
+              );
+              if (d != null) {
+                onSelect(d);
+              }
+            },
+          ),
         ),
       ),
     );
