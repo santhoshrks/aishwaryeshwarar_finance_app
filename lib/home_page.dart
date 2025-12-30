@@ -1,4 +1,5 @@
 import 'package:aishwaryeshwarar_finance/about_page.dart';
+import 'package:aishwaryeshwarar_finance/settings_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -115,6 +116,7 @@ class _HomePageState extends State<HomePage> {
           _drawerItem(context, Icons.backup, 'Backup & Restore', const BackupRestorePage()),
           _drawerItem(context, Icons.calculate, 'Interest Calculator', const InterestCalculatorPage()),
           const Divider(),
+          _drawerItem(context, Icons.settings, 'Settings', const SettingsPage()),
           _drawerItem(context, Icons.info, 'About Us', const AboutPage()),
           const Divider(),
           ListTile(
@@ -169,7 +171,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ================= 🔥 FIXED TODAY COLLECTION =================
+  // ================= 🔥 FIXED TODAY COLLECTION (NO INDEX REQUIRED) =================
   Widget _buildTodaysCollection() {
     final today = DateTime.now();
 

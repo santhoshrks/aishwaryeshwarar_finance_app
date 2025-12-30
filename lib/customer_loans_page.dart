@@ -51,6 +51,35 @@ class CustomerLoansPage extends StatelessWidget {
       );
     }
   }
+  
+  // ================= DELETE LOAN =================
+  Future<void> _deleteLoan(BuildContext context, QueryDocumentSnapshot loanDoc) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete Loan?', style: GoogleFonts.lato()),
+        content: Text('This will permanently delete this loan and all its associated payments. This action cannot be undone.', style: GoogleFonts.lato()),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancel', style: GoogleFonts.lato())),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Delete', style: GoogleFonts.lato(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    // Delete all payments in the sub-collection first
+    final paymentsSnapshot = await loanDoc.reference.collection('payments').get();
+    for (final payment in paymentsSnapshot.docs) {
+      await payment.reference.delete();
+    }
+
+    // Delete the loan document itself
+    await loanDoc.reference.delete();
+    
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Loan deleted successfully', style: GoogleFonts.lato())));
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -176,6 +205,10 @@ class CustomerLoansPage extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                 IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.redAccent, size: 24),
+                  onPressed: () => _deleteLoan(context, loanDoc),
+                ),
                  IconButton(
                   icon: const Icon(Icons.edit, color: Colors.blueGrey, size: 24),
                   onPressed: () => _showEditLoanDialog(context, loanDoc, loan),
